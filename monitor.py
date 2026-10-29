@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import hashlib
 
-# URL exacta de las Circulares Obligatorias (CO)
+# Usamos la URL base oficial sin redirección
 URL = "https://www.gob.mx/afac/acciones-y-programas/concesionarios-permisionarios-y-operadores-aereos-co"
 HISTORIAL_FILE = "ultimo_estado.txt"
 
@@ -27,10 +27,18 @@ def enviar_telegram(mensaje):
 
 def obtener_contenido():
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
     }
     
-    response = requests.get(URL, headers=headers, timeout=15)
+    # allow_redirects=True le permite a Python seguir el enlace correcto si gob.mx lo redirige
+    response = requests.get(URL, headers=headers, allow_redirects=True, timeout=20)
+    
+    # Si la URL redirige y da 404, probamos la URL alternativa automáticamente
+    if response.status_code == 404:
+        url_alt = "https://www.gob.mx/afac/acciones-y-programas/concesionarios-permisionarios-y-operadores-aereos"
+        response = requests.get(url_alt, headers=headers, allow_redirects=True, timeout=20)
+
     response.raise_for_status()
     
     soup = BeautifulSoup(response.text, "html.parser")
@@ -50,7 +58,7 @@ def monitorear():
         if not os.path.exists(HISTORIAL_FILE):
             with open(HISTORIAL_FILE, "w", encoding="utf-8") as f:
                 f.write(hash_actual)
-            print("Primera ejecución completada. Estado guardado.")
+            print("Primera ejecución completada exitosamente.")
             enviar_telegram("🟢 <b>Monitor AFAC activado</b>: El sistema ha iniciado exitosamente.")
             return
 
@@ -72,7 +80,7 @@ def monitorear():
             print("Sin cambios el día de hoy.")
             
     except Exception as e:
-        print(f"Ocurrió un detalle al consultar la página: {e}")
+        print(f"Aviso del sistema: {e}")
 
 if __name__ == "__main__":
     monitorear()
