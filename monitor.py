@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import hashlib
 
-URL = "https://www.gob.mx/afac/acciones-y-programas/concesionarios-permisionarios-y-operadores-aereos"
+URL = "https://www.gob.mx/afac/acciones-y-programas/concesionarios-permisionarios-y-operadores-aereos-co"
 HISTORIAL_FILE = "ultimo_estado.txt"
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
