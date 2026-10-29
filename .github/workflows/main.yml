@@ -1,0 +1,36 @@
+name: Monitor AFAC Diario
+
+on:
+  schedule:
+    # Se ejecuta todos los días a las 13:00 UTC (7:00 AM hora del Centro de México)
+    - cron: '0 13 * * *'
+  workflow_dispatch: # Permite ejecutarlo manualmente desde GitHub cuando quieras
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-python-version: '3.10'
+
+      - name: Instalar librerías
+        run: pip install -r requirements.txt
+
+      - name: Ejecutar script de monitoreo
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python monitor.py
+
+      - name: Guardar cambios del historial en el repositorio
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add ultimo_estado.txt
+          git commit -m "Actualizar historial de estado [skip ci]" || exit 0
+          git push
